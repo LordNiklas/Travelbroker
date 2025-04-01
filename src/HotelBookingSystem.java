@@ -1,5 +1,4 @@
 import java.util.*;
-
 public class HotelBookingSystem {
     public static void main(String[] args) {
         // Initialize hotels with names and room counts
