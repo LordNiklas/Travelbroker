@@ -1,25 +1,32 @@
-// BookingService.java
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
-public class BookingService {
+class BookingService {
     private List<Hotel> hotels;
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-    // Constructor to initialize the list of hotels
     public BookingService(List<Hotel> hotels) {
         this.hotels = hotels;
     }
 
-    // Method to book a room in a specific hotel by its name
     public String bookHotel(String hotelName) {
         for (Hotel hotel : hotels) {
             if (hotel.getName().equalsIgnoreCase(hotelName)) {
                 if (hotel.reserveRoom()) {
-                    return "Room reserved at " + hotel.getName();
+                    return log("Room reserved at " + hotel.getName());
                 } else {
-                    return "No rooms available at " + hotel.getName();
+                    return log("No rooms available at " + hotel.getName());
                 }
             }
         }
-        return "Hotel not found: " + hotelName;
+        return log("Hotel not found: " + hotelName);
+    }
+
+    private String log(String message) {
+        String timestamp = dateFormat.format(new Date());
+        String logMessage = timestamp + " - " + message;
+        System.out.println(logMessage);
+        return logMessage;
     }
 }

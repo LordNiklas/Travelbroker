@@ -1,19 +1,34 @@
-// TravelBroker.java
+import java.util.ArrayList;
 import java.util.List;
 
-public class TravelBroker {
+class TravelBroker {
     private BookingService bookingService;
+    private List<String> successfulBookings = new ArrayList<>();
 
-    // Constructor to initialize the booking service
     public TravelBroker(BookingService bookingService) {
         this.bookingService = bookingService;
     }
 
-    // Method to process multiple booking requests asynchronously
-    public void processBookingRequests(List<String> hotelRequests) {
-        for (String hotelRequest : hotelRequests) {
-            String result = bookingService.bookHotel(hotelRequest);
-            System.out.println(result);
+    public void processBookingRequests(List<String> requests) {
+        for (String hotelName : requests) {
+            String result = bookingService.bookHotel(hotelName);
+            if (result.contains("Room reserved")) {
+                successfulBookings.add(hotelName);
+            } else {
+                cancelSuccessfulBookings();
+                break;
+            }
         }
+        if (successfulBookings.size() == requests.size()) {
+            System.out.println("Everything booked successfully.");
+        }
+    }
+
+    private void cancelSuccessfulBookings() {
+        System.out.println("Booking failed. Rolling back successful reservations:");
+        for (String hotelName : successfulBookings) {
+            System.out.println("Cancelled reservation at: " + hotelName);
+        }
+        successfulBookings.clear();
     }
 }

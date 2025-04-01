@@ -1,6 +1,5 @@
-// HotelServer.java
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.text.SimpleDateFormat;
 
 public class HotelServer {
     public static void main(String[] args) {
@@ -15,25 +14,10 @@ public class HotelServer {
         TravelBroker travelBroker = new TravelBroker(bookingService);
 
         // Example booking requests from clients
-        List<String> requests = new ArrayList<>();
-        requests.add("HolidayInTheMountains");
-        requests.add("TravelToTheSea");
-        requests.add("AwayFromHome");
+        List<String> requests = Arrays.asList("HolidayInTheMountains", "TravelToTheSea", "AwayFromHome");
 
         // Process the booking requests using the travel broker
         System.out.println("Starting booking simulation...");
         travelBroker.processBookingRequests(requests);
-
-        // Simulate technical errors or business issues (optional feature)
-        simulateErrors(hotels);
-    }
-
-    // Method to simulate technical errors in the system
-    private static void simulateErrors(List<Hotel> hotels) {
-        System.out.println("\nSimulating technical errors...");
-        for (Hotel hotel : hotels) {
-            System.out.println("Technical error occurred at hotel: " + hotel.getName());
-            // Additional error handling logic can be implemented here
-        }
     }
 }
