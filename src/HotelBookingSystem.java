@@ -2,40 +2,43 @@ import java.util.*;
 import java.text.SimpleDateFormat;
 import java.io.*;
 import java.net.*;
-import javax.swing.*;
-import java.awt.*;
-import java.util.List;
-
-import java.util.*;
-import java.text.SimpleDateFormat;
-import java.io.*;
-import java.net.*;
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
 
 public class HotelBookingSystem {
     public static void main(String[] args) {
-        // Initialize GUI for live visualization
-        BookingGUI gui = new BookingGUI();
-        SwingUtilities.invokeLater(gui::createAndShowGUI);
-
         // Initialize hotels with names and room counts
-        List<String> hotelNames = Arrays.asList("HolidayInTheMountains", "TravelToTheSea", "AwayFromHome");
-        List<Integer> roomCounts = Arrays.asList(10, 5, 8);
+        List<Hotel> hotels = new ArrayList<>();
+        hotels.add(new Hotel("HolidayInTheMountains", 10));
+        hotels.add(new Hotel("TravelToTheSea", 5));
+        hotels.add(new Hotel("AwayFromHome", 8));
 
-        // Start hotel servers as separate threads
-        for (int i = 0; i < hotelNames.size(); i++) {
-            String name = hotelNames.get(i);
-            int rooms = roomCounts.get(i);
-            new Thread(() -> new HotelServer(name, rooms, gui).start()).start();
+        // Initialize booking service
+        BookingService bookingService = new BookingService(hotels);
+        TravelBroker travelBroker = new TravelBroker(bookingService);
+
+        Scanner scanner = new Scanner(System.in);
+        List<String> requests = new ArrayList<>();
+        while (true) {
+            System.out.println("Enter hotels to book (comma separated):");
+            String input = scanner.nextLine();
+            List<String> enteredHotels = Arrays.asList(input.split(","));
+            boolean allValid = true;
+            for (String hotelName : enteredHotels) {
+                boolean found = hotels.stream().anyMatch(h -> h.getName().equalsIgnoreCase(hotelName.trim()));
+                if (!found) {
+                    allValid = false;
+                    System.out.println("Invalid hotel: " + hotelName.trim());
+                    System.out.println("Available hotels are:");
+                    hotels.forEach(h -> System.out.println("- " + h.getName()));
+                    break;
+                }
+            }
+            if (allValid) {
+                requests.addAll(enteredHotels);
+                break;
+            } else {
+                System.out.println("Please try again with valid hotel names.");
+            }
         }
-
-        // Allow servers to start
-        try { Thread.sleep(1000); } catch (InterruptedException e) { e.printStackTrace(); }
-
-        // Initialize the travel broker
-        TravelBroker travelBroker = new TravelBroker(gui);
-        gui.setTravelBroker(travelBroker);
+        travelBroker.processBookingRequests(requests);
     }
 }

@@ -8,17 +8,15 @@ import java.net.Socket;
 class HotelServer {
     private String name;
     private int availableRooms;
-    private BookingGUI gui;
 
-    public HotelServer(String name, int availableRooms, BookingGUI gui) {
+    public HotelServer(String name, int availableRooms) {
         this.name = name;
         this.availableRooms = availableRooms;
-        this.gui = gui;
     }
 
     public void start() {
         try (ServerSocket serverSocket = new ServerSocket(0)) {
-            gui.log("Hotel server started for " + name + " on port " + serverSocket.getLocalPort());
+            System.out.println("Hotel server started for " + name + " on port " + serverSocket.getLocalPort());
             while (true) {
                 Socket clientSocket = serverSocket.accept();
                 new Thread(() -> handleRequest(clientSocket)).start();
@@ -47,7 +45,7 @@ class HotelServer {
                 response = "FAILURE";
             }
             out.println(response);
-            gui.log("Hotel " + name + ": " + response);
+            System.out.println("Hotel " + name + ": " + response);
             clientSocket.close();
         } catch (IOException e) {
             e.printStackTrace();
