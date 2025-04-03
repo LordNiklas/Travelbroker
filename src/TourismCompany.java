@@ -1,16 +1,17 @@
-import java.util.*;
-
 public class TourismCompany {
     private String name;
-    private TravelBroker broker;
+    private TravelBroker travelBroker;
 
-    public TourismCompany(String name, TravelBroker broker) {
+    public TourismCompany(String name, TravelBroker travelBroker) {
         this.name = name;
-        this.broker = broker;
+        this.travelBroker = travelBroker;
     }
 
-    public void requestBooking(List<String> hotelNames, int week) {
-        System.out.println(name + " requesting booking for hotels " + hotelNames + " in week " + week);
-        broker.processBookingRequests(hotelNames, week);
+    // Books a hotel for a given week
+    public boolean requestBooking(String hotelName, int week) {
+        // Call the TravelBroker to try the booking
+        return travelBroker.requestBooking(hotelName, week);
     }
+
+
 }

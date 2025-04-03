@@ -1,96 +1,108 @@
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-import java.util.ArrayList;
 
 public class HotelBookingSystem {
     public static void main(String[] args) {
-        List<Hotel> hotels = Arrays.asList(
-                new Hotel("Fujiyama", 5),
-                new Hotel("Royal", 3),
-                new Hotel("Boomerang", 4)
-        );
+        // Create sample hotels
+        List<Hotel> hotels = new ArrayList<>();
+        hotels.add(new Hotel("Fujiyama", 5));  // 5 rooms available
+        hotels.add(new Hotel("Royal", 3));     // 3 rooms available
+        hotels.add(new Hotel("Boomerang", 4)); // 4 rooms available
 
+        // Create BookingService with the list of hotels
         BookingService bookingService = new BookingService(hotels);
-        TravelBroker travelBroker = new TravelBroker(bookingService);
 
-        TourismCompany company1 = new TourismCompany("HolidayInTheMountains", travelBroker);
-        TourismCompany company2 = new TourismCompany("TravelToTheSea", travelBroker);
-        TourismCompany company3 = new TourismCompany("AwayFromHome", travelBroker);
+        // Example travel companies and trip duration
+        TravelBroker selectedCompany = new TravelBroker(bookingService);
 
+        // Initialize user input
         Scanner scanner = new Scanner(System.in);
 
-        System.out.println("Wählen Sie ein Reisebüro:");
+        // Step 1: Select a travel agency
+        System.out.println("Choose a travel agency:");
         System.out.println("1 - HolidayInTheMountains");
         System.out.println("2 - TravelToTheSea");
         System.out.println("3 - AwayFromHome");
-        int choice = scanner.nextInt();
-        scanner.nextLine();  // Zeilenumbruch abfangen
-        TourismCompany selectedCompany;
-        switch (choice) {
-            case 1:
-                selectedCompany = company1;
-                break;
-            case 2:
-                selectedCompany = company2;
-                break;
-            case 3:
-                selectedCompany = company3;
-                break;
-            default:
-                System.out.println("Ungültige Auswahl, Programm wird beendet.");
-                return;
+        int agencyChoice = scanner.nextInt();
+        scanner.nextLine();  // Consume newline character
+
+        // Assign the corresponding company based on selection
+        if (agencyChoice == 1) {
+            System.out.println("Selected HolidayInTheMountains.");
+        } else if (agencyChoice == 2) {
+            System.out.println("Selected TravelToTheSea.");
+        } else if (agencyChoice == 3) {
+            System.out.println("Selected AwayFromHome.");
+        } else {
+            System.out.println("Invalid choice. Exiting...");
+            return;
         }
 
+        // Step 2: Enter trip start week
+        System.out.print("Enter the start week of the trip (1 to 100): ");
+        int startWeek = scanner.nextInt();
+        scanner.nextLine();  // Consume newline character
+
+        // Step 3: Choose hotels
         List<String> chosenHotels = new ArrayList<>();
-        String lastChosenHotel = "";
+        List<Integer> stayDurations = new ArrayList<>();
+
         while (true) {
-            System.out.println("Wählen Sie ein Hotel (oder 'q' zum Beenden):");
+            System.out.println("Choose a hotel (or 'q' to quit):");
             for (int i = 0; i < hotels.size(); i++) {
                 System.out.println((i + 1) + " - " + hotels.get(i).getName());
             }
             String hotelChoice = scanner.nextLine();
-            if (hotelChoice.equalsIgnoreCase("q")) {
+
+            if (hotelChoice.equals("q")) {
                 break;
             }
+
             try {
-                int hotelIndex = Integer.parseInt(hotelChoice.trim()) - 1;
-                if (hotelIndex >= 0 && hotelIndex < hotels.size()) {
-                    String selectedHotel = hotels.get(hotelIndex).getName();
-                    // Überprüfen, ob dasselbe Hotel hintereinander gewählt wurde
-                    if (!selectedHotel.equals(lastChosenHotel)) {
-                        chosenHotels.add(selectedHotel);
-                        lastChosenHotel = selectedHotel; // Setzen des zuletzt gewählten Hotels
-                        System.out.println("Hotel '" + selectedHotel + "' hinzugefügt.");
-                    } else {
-                        System.out.println("Das gleiche Hotel kann nicht hintereinander gewählt werden.");
-                    }
-                } else {
-                    System.out.println("Ungültige Auswahl. Bitte erneut eingeben.");
+                int choice = Integer.parseInt(hotelChoice);
+                if (choice < 1 || choice > hotels.size()) {
+                    System.out.println("Invalid input. Please choose a number.");
+                    continue;
                 }
+
+                String hotelName = hotels.get(choice - 1).getName();
+                chosenHotels.add(hotelName);
+                System.out.print("Stay in " + hotelName + " (weeks): ");
+                int stayDuration = scanner.nextInt();
+                scanner.nextLine();  // Consume newline character
+                stayDurations.add(stayDuration);
+                System.out.println("Hotel '" + hotelName + "' added.");
             } catch (NumberFormatException e) {
-                System.out.println("Ungültige Eingabe. Bitte eine Nummer wählen.");
+                System.out.println("Invalid input. Please choose a number.");
             }
         }
 
-        System.out.println("Geben Sie die Aufenthaltsdauer in Wochen für jedes Hotel an:");
-        List<Integer> stayDurations = new ArrayList<>();
-        for (String hotel : chosenHotels) {
-            System.out.print("Aufenthalt in " + hotel + " (Wochen): ");
-            int duration = scanner.nextInt();
-            stayDurations.add(duration);
-        }
+        // Step 4: Attempt booking for each hotel
+        int currentWeek = startWeek;
+        List<String> failedHotels = new ArrayList<>();  // List of failed hotels
 
-        int currentWeek = 1;
         for (int i = 0; i < chosenHotels.size(); i++) {
             String hotelName = chosenHotels.get(i);
             int duration = stayDurations.get(i);
+
+            // Attempt to book for the specified duration
+            List<String> currentHotelBookings = new ArrayList<>();
             for (int j = 0; j < duration; j++) {
-                selectedCompany.requestBooking(Arrays.asList(hotelName), currentWeek);
+                boolean success = selectedCompany.requestBooking(hotelName, currentWeek);
+
+                if (!success) {
+                    System.out.println("Booking failed at " + hotelName + " for week " + currentWeek);
+                    failedHotels.add(hotelName);  // Store failed hotel name in the list
+                    selectedCompany.rollbackBookings(failedHotels, currentWeek);  // Call rollback with the list of failed bookings and current week
+                    return;  // Cancel the entire booking process
+                }
+
+                currentHotelBookings.add(hotelName);
                 currentWeek++;
             }
         }
 
-        System.out.println("Buchung abgeschlossen.");
+        System.out.println("Booking completed.");
     }
 }

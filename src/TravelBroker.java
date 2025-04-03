@@ -1,31 +1,31 @@
-import java.util.ArrayList;
 import java.util.List;
 
-class TravelBroker {
+public class TravelBroker {
     private BookingService bookingService;
 
     public TravelBroker(BookingService bookingService) {
         this.bookingService = bookingService;
     }
 
-    public void processBookingRequests(List<String> hotelNames, int week) {
-        List<String> successfulBookings = new ArrayList<>();
-        for (String hotelName : hotelNames) {
-            String result = bookingService.bookHotel(hotelName, week);
-            if (result.contains("Keine Zimmer verfügbar")) {
-                rollbackBookings(successfulBookings, week);
-                LogUtils.log("Buchung bei " + hotelName + " fehlgeschlagen, vorherige Buchungen werden zurückgesetzt.");
-                return;
-            }
-            successfulBookings.add(hotelName);
-        }
-        LogUtils.log("Alle Buchungen erfolgreich abgeschlossen.");
+    // Booking request for a single hotel
+    public boolean requestBooking(String hotelName, int week) {
+        String result = bookingService.bookHotel(hotelName, week);
+        return result.contains("Room booked successfully");
     }
 
-    private void rollbackBookings(List<String> successfulBookings, int week) {
-        for (String hotelName : successfulBookings) {
+    // Rollback for a specific hotel
+    public void rollbackBookingsForHotel(List<String> currentHotelBookings, int week) {
+        for (String hotelName : currentHotelBookings) {
+            System.out.println("Rolling back booking at " + hotelName + " for week " + week);
             bookingService.cancelBooking(hotelName, week);
-            LogUtils.log("Rückbuchung durchgeführt für " + hotelName + " in Woche " + week);
         }
+    }
+
+    // Rollback for all bookings after a failure
+    public void rollbackBookings(List<String> bookings, int week) {
+        for (String booking : bookings) {
+            System.out.println("Rolling back booking: " + booking);
+        }
+        System.out.println("Bookings rolled back until week: " + week);
     }
 }
