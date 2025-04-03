@@ -1,9 +1,7 @@
-import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class BookingService {
+class BookingService {
     private List<Hotel> hotels;
-    private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private Map<String, Set<Integer>> hotelBookings = new HashMap<>();
 
     public BookingService(List<Hotel> hotels) {
@@ -18,23 +16,34 @@ public class BookingService {
             if (hotel.getName().equalsIgnoreCase(hotelName)) {
                 Set<Integer> bookings = hotelBookings.get(hotelName);
                 if (bookings.contains(week)) {
-                    return log("Hotel already booked for week " + week + " at " + hotelName);
+                    return LogUtils.log("Hotel bereits für Woche " + week + " gebucht: " + hotelName);
                 }
                 if (hotel.reserveRoom(week)) {
                     bookings.add(week);
-                    return log("Room reserved at " + hotel.getName() + " for week " + week);
+                    return LogUtils.log("Zimmer reserviert im Hotel " + hotel.getName() + " für Woche " + week);
                 } else {
-                    return log("No rooms available at " + hotel.getName());
+                    return LogUtils.log("Keine Zimmer verfügbar im Hotel " + hotel.getName());
                 }
             }
         }
-        return log("Hotel not found: " + hotelName);
+        return LogUtils.log("Hotel nicht gefunden: " + hotelName);
     }
 
-    private String log(String message) {
-        String timestamp = dateFormat.format(new Date());
-        String logMessage = timestamp + " - " + message;
-        System.out.println(logMessage);
-        return logMessage;
+    public void cancelBooking(String hotelName, int week) {
+        for (Hotel hotel : hotels) {
+            if (hotel.getName().equalsIgnoreCase(hotelName)) {
+                hotel.releaseRoom(week);
+                LogUtils.log("Buchung storniert im Hotel " + hotel.getName() + " für Woche " + week);
+                return;
+            }
+        }
+    }
+
+    public List<String> getAvailableHotels() {
+        List<String> availableHotels = new ArrayList<>();
+        for (Hotel hotel : hotels) {
+            availableHotels.add(hotel.getName() + " (" + (hotel.isFullyBooked() ? "Belegt" : "Frei") + ")");
+        }
+        return availableHotels;
     }
 }

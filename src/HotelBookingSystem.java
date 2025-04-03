@@ -1,73 +1,96 @@
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Scanner;
+import java.util.ArrayList;
+
 public class HotelBookingSystem {
     public static void main(String[] args) {
-        // Initialize hotels with names and room counts
-        List<Hotel> hotels = new ArrayList<>();
-        hotels.add(new Hotel("HolidayInTheMountains", 10));
-        hotels.add(new Hotel("TravelToTheSea", 5));
-        hotels.add(new Hotel("AwayFromHome", 8));
+        List<Hotel> hotels = Arrays.asList(
+                new Hotel("Fujiyama", 5),
+                new Hotel("Royal", 3),
+                new Hotel("Boomerang", 4)
+        );
 
-        // Initialize booking service
         BookingService bookingService = new BookingService(hotels);
         TravelBroker travelBroker = new TravelBroker(bookingService);
 
-        Scanner scanner = new Scanner(System.in);
-        List<String> requests = new ArrayList<>();
-        int startWeek = 0;
+        TourismCompany company1 = new TourismCompany("HolidayInTheMountains", travelBroker);
+        TourismCompany company2 = new TourismCompany("TravelToTheSea", travelBroker);
+        TourismCompany company3 = new TourismCompany("AwayFromHome", travelBroker);
 
-        while (true) {
-            System.out.println("Enter hotels to book (comma separated, max 5 hotels):");
-            String input = scanner.nextLine();
-            List<String> enteredHotels = Arrays.asList(input.split(","));
-            if (enteredHotels.size() > 5) {
-                System.out.println("Too many hotels. Please select up to 5.");
-                continue;
-            }
-            boolean allValid = true;
-            String previousHotel = "";
-            for (String hotelName : enteredHotels) {
-                final String currentHotel = hotelName.trim();
-                boolean found = hotels.stream().anyMatch(h -> h.getName().equalsIgnoreCase(currentHotel));
-                if (!found) {
-                    allValid = false;
-                    System.out.println("Invalid hotel: " + hotelName);
-                    System.out.println("Available hotels are:");
-                    hotels.forEach(h -> System.out.println("- " + h.getName()));
-                    break;
-                }
-                if (hotelName.equalsIgnoreCase(previousHotel)) {
-                    allValid = false;
-                    System.out.println("Error: Consecutive bookings cannot be in the same hotel: " + hotelName);
-                    break;
-                }
-                previousHotel = hotelName;
-            }
-            if (allValid) {
-                System.out.println("Enter the start week number (0-99) for booking:");
-                startWeek = scanner.nextInt();
-                scanner.nextLine();
-                if (startWeek < 0 || startWeek >= 100) {
-                    System.out.println("Invalid week number. Please choose a number between 0 and 99.");
-                    continue;
-                }
-                System.out.println("Enter the duration (in weeks) for each hotel, separated by commas:");
-                String durations = scanner.nextLine();
-                List<Integer> weeks = new ArrayList<>();
-                try {
-                    Arrays.stream(durations.split(",")).forEach(d -> weeks.add(Integer.parseInt(d.trim())));
-                } catch (NumberFormatException e) {
-                    System.out.println("Invalid duration format. Please enter numbers separated by commas.");
-                    continue;
-                }
-                if (weeks.size() != enteredHotels.size()) {
-                    System.out.println("Number of durations does not match the number of hotels.");
-                    continue;
-                }
-                travelBroker.processBookingRequests(requests, startWeek, weeks);
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("Wählen Sie ein Reisebüro:");
+        System.out.println("1 - HolidayInTheMountains");
+        System.out.println("2 - TravelToTheSea");
+        System.out.println("3 - AwayFromHome");
+        int choice = scanner.nextInt();
+        scanner.nextLine();  // Zeilenumbruch abfangen
+        TourismCompany selectedCompany;
+        switch (choice) {
+            case 1:
+                selectedCompany = company1;
                 break;
-            } else {
-                System.out.println("Please try again with valid hotel names.");
+            case 2:
+                selectedCompany = company2;
+                break;
+            case 3:
+                selectedCompany = company3;
+                break;
+            default:
+                System.out.println("Ungültige Auswahl, Programm wird beendet.");
+                return;
+        }
+
+        List<String> chosenHotels = new ArrayList<>();
+        String lastChosenHotel = "";
+        while (true) {
+            System.out.println("Wählen Sie ein Hotel (oder 'q' zum Beenden):");
+            for (int i = 0; i < hotels.size(); i++) {
+                System.out.println((i + 1) + " - " + hotels.get(i).getName());
+            }
+            String hotelChoice = scanner.nextLine();
+            if (hotelChoice.equalsIgnoreCase("q")) {
+                break;
+            }
+            try {
+                int hotelIndex = Integer.parseInt(hotelChoice.trim()) - 1;
+                if (hotelIndex >= 0 && hotelIndex < hotels.size()) {
+                    String selectedHotel = hotels.get(hotelIndex).getName();
+                    // Überprüfen, ob dasselbe Hotel hintereinander gewählt wurde
+                    if (!selectedHotel.equals(lastChosenHotel)) {
+                        chosenHotels.add(selectedHotel);
+                        lastChosenHotel = selectedHotel; // Setzen des zuletzt gewählten Hotels
+                        System.out.println("Hotel '" + selectedHotel + "' hinzugefügt.");
+                    } else {
+                        System.out.println("Das gleiche Hotel kann nicht hintereinander gewählt werden.");
+                    }
+                } else {
+                    System.out.println("Ungültige Auswahl. Bitte erneut eingeben.");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Ungültige Eingabe. Bitte eine Nummer wählen.");
             }
         }
+
+        System.out.println("Geben Sie die Aufenthaltsdauer in Wochen für jedes Hotel an:");
+        List<Integer> stayDurations = new ArrayList<>();
+        for (String hotel : chosenHotels) {
+            System.out.print("Aufenthalt in " + hotel + " (Wochen): ");
+            int duration = scanner.nextInt();
+            stayDurations.add(duration);
+        }
+
+        int currentWeek = 1;
+        for (int i = 0; i < chosenHotels.size(); i++) {
+            String hotelName = chosenHotels.get(i);
+            int duration = stayDurations.get(i);
+            for (int j = 0; j < duration; j++) {
+                selectedCompany.requestBooking(Arrays.asList(hotelName), currentWeek);
+                currentWeek++;
+            }
+        }
+
+        System.out.println("Buchung abgeschlossen.");
     }
 }

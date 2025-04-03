@@ -1,37 +1,31 @@
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-public class TravelBroker {
+class TravelBroker {
     private BookingService bookingService;
 
     public TravelBroker(BookingService bookingService) {
         this.bookingService = bookingService;
     }
 
-    public void processBookingRequests(List<String> hotelNames, int startWeek, List<Integer> durations) {
-        int currentWeek = startWeek;
+    public void processBookingRequests(List<String> hotelNames, int week) {
         List<String> successfulBookings = new ArrayList<>();
-
-        for (int i = 0; i < hotelNames.size(); i++) {
-            String hotelName = hotelNames.get(i);
-            int duration = durations.get(i);
-            for (int week = 0; week < duration; week++) {
-                String bookingResult = bookingService.bookHotel(hotelName, currentWeek);
-                if (bookingResult.contains("No rooms available")) {
-                    System.out.println("Booking failed at hotel: " + hotelName + " in week: " + currentWeek);
-                    rollbackBookings(successfulBookings);
-                    return;
-                }
-                successfulBookings.add(hotelName + " (Week: " + currentWeek + ")");
-                currentWeek++;
+        for (String hotelName : hotelNames) {
+            String result = bookingService.bookHotel(hotelName, week);
+            if (result.contains("Keine Zimmer verfügbar")) {
+                rollbackBookings(successfulBookings, week);
+                LogUtils.log("Buchung bei " + hotelName + " fehlgeschlagen, vorherige Buchungen werden zurückgesetzt.");
+                return;
             }
+            successfulBookings.add(hotelName);
         }
-
-        System.out.println("Everything booked successfully:");
-        successfulBookings.forEach(System.out::println);
+        LogUtils.log("Alle Buchungen erfolgreich abgeschlossen.");
     }
 
-    private void rollbackBookings(List<String> successfulBookings) {
-        System.out.println("Rolling back successful bookings:");
-        successfulBookings.forEach(booking -> System.out.println("- Cancelled: " + booking));
+    private void rollbackBookings(List<String> successfulBookings, int week) {
+        for (String hotelName : successfulBookings) {
+            bookingService.cancelBooking(hotelName, week);
+            LogUtils.log("Rückbuchung durchgeführt für " + hotelName + " in Woche " + week);
+        }
     }
 }
