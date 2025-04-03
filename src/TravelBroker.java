@@ -1,31 +1,46 @@
 import java.util.List;
 
 public class TravelBroker {
-    private BookingService bookingService;
+    private List<Hotel> hotels;
 
-    public TravelBroker(BookingService bookingService) {
-        this.bookingService = bookingService;
+    public TravelBroker(List<Hotel> hotels) {
+        this.hotels = hotels;
     }
 
-    // Booking request for a single hotel
+    // Attempts to book a hotel for a specific week
     public boolean requestBooking(String hotelName, int week) {
-        String result = bookingService.bookHotel(hotelName, week);
-        return result.contains("Room booked successfully");
+        Hotel hotel = findHotelByName(hotelName);
+
+        if (hotel == null) {
+            LogUtils.log("Hotel not found: " + hotelName);
+            return false;
+        }
+
+        String bookingMessage = hotel.bookRoomForWeek(week);
+        LogUtils.log(bookingMessage);
+
+        return bookingMessage.startsWith("Room booked");
     }
 
-    // Rollback for a specific hotel
-    public void rollbackBookingsForHotel(List<String> currentHotelBookings, int week) {
-        for (String hotelName : currentHotelBookings) {
-            System.out.println("Rolling back booking at " + hotelName + " for week " + week);
-            bookingService.cancelBooking(hotelName, week);
+    // Finds a hotel by its name
+    private Hotel findHotelByName(String hotelName) {
+        for (Hotel hotel : hotels) {
+            if (hotel.getName().equals(hotelName)) {
+                return hotel;
+            }
         }
+        return null;
     }
 
-    // Rollback for all bookings after a failure
-    public void rollbackBookings(List<String> bookings, int week) {
-        for (String booking : bookings) {
-            System.out.println("Rolling back booking: " + booking);
+    // Rolls back the bookings for a list of hotels that failed
+    public void rollbackBookings(List<String> failedHotels, int week) {
+        LogUtils.log("Rolling back bookings for week " + week);
+
+        for (String hotelName : failedHotels) {
+            Hotel hotel = findHotelByName(hotelName);
+            if (hotel != null) {
+                hotel.cancelBookingForWeek(week);  // Cancel the booking for the specific week
+            }
         }
-        System.out.println("Bookings rolled back until week: " + week);
     }
 }
