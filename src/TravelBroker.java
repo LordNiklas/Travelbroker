@@ -1,46 +1,38 @@
+import org.zeromq.ZMQ;
+
 import java.util.List;
 
 public class TravelBroker {
-    private List<Hotel> hotels;
+    private ZMQ.Context context;
+    private ZMQ.Socket socket;
+    private List<String> hotelAddresses;
 
-    public TravelBroker(List<Hotel> hotels) {
-        this.hotels = hotels;
+    public TravelBroker(List<String> hotelAddresses) {
+        this.context = ZMQ.context(1);
+        this.socket = context.socket(ZMQ.REQ);  // TravelBroker verwendet REQUEST-Socket
+        this.hotelAddresses = hotelAddresses;
     }
 
-    // Attempts to book a hotel for a specific week
+    public void start() {
+        socket.bind("tcp://*:5555");  // Port für den TravelBroker
+        System.out.println("TravelBroker started on port 5555");
+    }
+
     public boolean requestBooking(String hotelName, int week) {
-        Hotel hotel = findHotelByName(hotelName);
+        for (String hotelAddress : hotelAddresses) {
+            socket.connect("tcp://" + hotelAddress);  // Verbindet sich mit jedem Hotel
 
-        if (hotel == null) {
-            LogUtils.log("Hotel not found: " + hotelName);
-            return false;
-        }
+            String message = "BOOK " + hotelName + " " + week;
+            socket.send(message);
 
-        String bookingMessage = hotel.bookRoomForWeek(week);
-        LogUtils.log(bookingMessage);
-
-        return bookingMessage.startsWith("Room booked");
-    }
-
-    // Finds a hotel by its name
-    private Hotel findHotelByName(String hotelName) {
-        for (Hotel hotel : hotels) {
-            if (hotel.getName().equals(hotelName)) {
-                return hotel;
+            String response = socket.recvStr();
+            if ("SUCCESS".equals(response)) {
+                System.out.println("Booking successful for " + hotelName + " for week " + week);
+                return true;
+            } else {
+                System.out.println("Booking failed for " + hotelName + " for week " + week);
             }
         }
-        return null;
-    }
-
-    // Rolls back the bookings for a list of hotels that failed
-    public void rollbackBookings(List<String> failedHotels, int week) {
-        LogUtils.log("Rolling back bookings for week " + week);
-
-        for (String hotelName : failedHotels) {
-            Hotel hotel = findHotelByName(hotelName);
-            if (hotel != null) {
-                hotel.cancelBookingForWeek(week);  // Cancel the booking for the specific week
-            }
-        }
+        return false;
     }
 }
